@@ -1,0 +1,444 @@
+% =====================================================================
+%  SPECIFIKACIJA PROJEKTA  --  Ugradbeni sistemi (samostalni projekat)
+%  Agentski IoT sistem zasnovan na Hermes Agentu
+% ---------------------------------------------------------------------
+%  Kompajliranje:  pdflatex  (Overleaf ili lokalno `pdflatex ovaj_fajl.tex`)
+%
+%  Preostalo za popuniti (oznake TODO):
+%    - naziv projekta, oznaka tima, imena clanova   -> naslovni dio / sekcija 1
+%    - GPIO pinovi za komponente                      -> sekcija 4
+%    - imena boja / scena i raspodjela zadataka       -> sekcije 8, 10
+% =====================================================================
+
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[croatian]{babel}   % ako babel-croatian nije instaliran, obrisite ovu liniju
+
+\usepackage[a4paper,margin=2.5cm]{geometry}
+\usepackage{microtype}
+\usepackage{setspace}
+\onehalfspacing
+
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage[hidelinks]{hyperref}
+
+\usepackage{listings}
+\definecolor{codebg}{rgb}{0.97,0.97,0.95}
+\lstdefinestyle{json}{
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  frame=single,
+  framesep=6pt,
+  rulecolor=\color{gray!40},
+  showstringspaces=false,
+  columns=fullflexible,
+  keepspaces=true,
+}
+
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+
+% =====================================================================
+\begin{document}
+
+% ---------------------- NASLOVNI DIO --------------------------------
+\begin{titlepage}
+      \centering
+      % \includegraphics[width=0.18\textwidth]{etf_logo.png}\\[1.0cm]  % opcionalno: logo fakulteta
+      {\large Elektrotehnički fakultet Univerziteta u Sarajevu\par}
+      {\large Kurs: Ugradbeni sistemi\par}
+      \vspace{2.5cm}
+
+      {\Huge\bfseries NLHome \par}
+      \vspace{0.6cm}
+      {\large\itshape Agentski IoT sistem zasnovan na Hermes Agentu\par}
+
+      \vspace{2.5cm}
+      {\large\bfseries Specifikacija projekta\par}
+      \vspace{2.0cm}
+
+      \begin{tabular}{rl}
+            \textbf{Članovi:} & Aid Mustafić, 19935    \\
+                              & Elmas Hamidović, 20059 \\
+                              & Tarik Redžić, 20072    \\
+      \end{tabular}
+
+      \vfill
+      {\large 7. jun \the\year}
+\end{titlepage}
+
+% --------------------------------------------------------------------
+\section{Osnovni podaci o projektu}
+
+\begin{tabularx}{\textwidth}{@{}l X@{}}
+      \toprule
+      Naziv projekta    & NLHome Project (Natural Language Home Project)                   \\
+      Tema / kategorija & Intelligent home (Pametno upravljanje i monitoring putem agenta) \\
+      Članovi tima      & Elmas Hamidović, Aid Mustafić, Tarik Redžić                      \\
+      LLM model         & qwen3.5:9b-64k (Hermes Agent, Raspberry Pi 5)                    \\
+      \bottomrule
+\end{tabularx}
+
+% --------------------------------------------------------------------
+\section{Opis problema i scenarija}
+
+Svakodnevni život i vođenje domaćinstva uključuje pamćenje i upravljanje brojnim obavezama, uređajima i informacijama:
+od praćenja i pravilne potrošnje električne energije, pravilnim održavanjem temperature, protoka zraka i osvjetljenja, do praćenja obaveza i vanjskih informacija (poput vremenske prognoze) i odlučivanja na osnovu istog.
+
+Cilj ovog projekta je realizirati agentski pametni dom u kojem korisnik prirodnim jezikom, uvođenjem glavnog kontrolnog panela (LCD displej sa upravljačkim tasterima)
+ili putem Telegram bota, zadaje ciljeve, a Hermes Agent ih ostvaruje koristeći integrisana senzorska očitanja, vanjske informacije i pravila zadana kroz prirodni dijalog sa korisnikom.
+Pored navedenog, korisniku se pružaju dodatne, manje ophodne funkcionalnosti, poput informativnih prikaza na 7-segmentnim displejima (Dohvaćanje i praćenje trenutnog stanja sportskih utakmica, trenutne cijene goriva, ...) i statusnih indikacija RGB diodom.
+
+\section{Funkcionalnosti sistema}
+
+Spisak glavnih funkcionalnosti sistema je sljedeći:
+
+\begin{itemize}[nosep]
+      \item \textbf{Pametno praćenje obaveza.}
+            \begin{itemize}
+                  \item \textbf{Problem/Scenarij}: Korisnik ne može aktivno voditi računa o svim obavezama
+                  \item \textbf{Rješenje}: Korisnik traži od agenta da zapiše, vodi računa i blagovremeno podsjeća na obaveze putem prirodnog jezika, putem Telegrama ili fizičkog panela.
+                  \item \textbf{Krajniji uređaji}: Telegram notifikacije, LCD displej.
+
+            \end{itemize}
+      \item \textbf{Adaptivni sistem prozora i roletni}
+            \begin{itemize}
+                  \item \textbf{Problem/Scenarij}: Korisnik želi da prilagodi osvjetljenje i protok zraka u sobi, ali ne želi stalno ručno upravljati roletnama ili prozorima.
+                  \item \textbf{Rješenje}: Korisnik zadaje pravila poput ,,ako je vruće, otvori prozore'' ili ,,ako je sunčano, spusti roletne'', a agent na osnovu senzorskih očitanja (temperatura, LDR) i vanjskih informacija (prognoza) donosi odluke
+                  \item \textbf{Krajniji uređaji}: picoETF (Upravljanje sistemom), servo motor (Simulacija mehanizma sistema roletni/prozora), Tasmota ESP32 (Očitavanje eksternih senzora i komunikacija sa sistemom)
+            \end{itemize}
+      \item \textbf{Adaptivno osvjetljenje.}
+            \begin{itemize}
+                  \item \textbf{Problem/Scenarij}: Korisnik želi da optimalnije upravlja osvjetljenjem u sobi, prema svojim preferencama i trenutnim uslovima, ali ne želi stalno ručno upravljati LED diodama.
+                  \item \textbf{Rješenje}: Korisnik zadaje pravila i predefinisana stanja (scene), a agent na osnovu senzorskih očitanja (LDR, PIR) i vanjskih informacija (prognoza) donosi odluke o osvjetljenju.
+                  \item \textbf{Krajniji uređaji}: picoETF (Upravljanje sistemom), LED diode (Rasvjeta), RGB dioda (Ambijentalna rasvjeta i statusni indikator), Tasmota ESP32 (Očitavanje eksternih senzora i komunikacija sa sistemom), Fotosenzor (LDR) (Očitavanje nivoa ambijentalnog svjetla), PIR senzor (Detekcija kretanja)
+            \end{itemize}
+      \item \textbf{Monitoring i obračun potrošnje električne energije.}
+            \begin{itemize}
+                  \item \textbf{Problem/Scenarij}: Korisnik nema uvidu u trenutnu potrošnju električne energije i troškove, niti želi stalno ručno proračunavati stanje potrošnje.
+                  \item \textbf{Rješenje}: Agent kontinuirano prati (simuliranu) potrošnju električne energije, alarmira korisnika na nagle promjene i, na zahtjev, obračunava potencijalne troškove po tarifi. Prikaz putem Telegram i/ili LCD kontrolnog panela.
+                  \item \textbf{Krajniji uređaji}: Potenciometar (Simulacija potrošaća), Tasmota ESP32 (Očitavanje i prenošenje podataka), picoETF (Prikaz potrošnje), Telegram (Notifikacije i obračun troškova na zahtjev),
+            \end{itemize}
+      \item \textbf{Adaptivno upravljanje temperaturom.}
+            \begin{itemize}
+                  \item \textbf{Problem/Scenarij}: Korisnik želi održavati optimalnu ciljnu temperaturu u sobi, bez praćenja eksternih uslova i stalnog ručnog upravljanja klimom.
+                  \item \textbf{Rješenje}: Agent održava ciljnu temperaturu preko releja za klimu, uz mogućnost ručne korekcije prirodnim jezikom.
+                  \item \textbf{Krajniji uređaji}:DHT11 Tasmota ESP32 (Očitavanje temperature i komunikacija), picoETF (Prikaz trenutne i ciljane temperature, upravljanje sistemom), Relej klime (Simulacija upravljanja temperaturom)
+            \end{itemize}
+
+      \item \textbf{Razni informativni sadržaj}
+            \begin{itemize}
+                  \item \textbf{Problem/Scenarij}: Korisnik želi imati brz i jednostavan pristup određenim informacijama (rezultat utakmice, trenutna cijena goriva, vremenska prognoza) bez potrebe da koristi telefon ili računar.
+                  \item \textbf{Rješenje}:  Na zahtjev, koristeći predefinisane režime, agent dohvata vanjske informacije (rezultat utakmice, vrijeme, prognoza) putem web-pretrage i prikazuje numeričku vrijednost na dva 7-segmentna displeja, uz RGB diodu kao statusni indikator.
+                        Primjer interakcije: ,,Prati rezultat utakmice BiH - Kanada, navijam za BiH'' -> agent dohvata rezultat, prikazuje ga na displejima, animirano prikazuje promjenu istog i postavlja RGB indikator u odnosu na ishod (Primjer: zeleno za pobjedu BiH, crveno za poraz, žuto za neriješeno).
+                        Primjer interakcije: ,,Koliko košta najjeftnije dizel gorivo u Sarajevu danas?'' -> agent dohvata trenutnu cijenu, prikazuje je na displejima i postavlja RGB indikator (npr. zeleno ako je ispod 3 KM, crveno ako je iznad).
+                  \item \textbf{Krajniji uređaji}: picoETF (Prikaz rezultata i statusa), RGB dioda (Statusni indikator)
+            \end{itemize}
+
+\end{itemize}
+
+% --------------------------------------------------------------------
+\section{Arhitektura sistema}
+
+Korisnik komunicira s Hermes Agentom kroz tri kanala: lokalni chat (SSH/TUI), Telegram
+gateway i putem fizičkog kontrolnog panela (tasteri i LCD displej na picoETF).
+Agent se izvršava na Raspberry Pi 5 unutar Docker kontejnera i koristi LLM na ML serveru fakulteta.
+Pristup krajnjim uređajima ostvaruje preko MCP servera, koji komunicira s uređajima putem MQTT brokera, a
+po potrebi dohvata podatke s Interneta (prognoza, web-pretraga).
+
+MCP server, pored funkcija za neposredno upravljanje, sadrži i \textbf{trajno stanje}
+(pravila, scene, podsjetnici, dnevnik akcija i log potrošnje). Sve što je vremenski
+uslovljeno ili kontinuirano (podsjetnici, pravila tipa ,,ako temperatura prede X'',
+periodično mjerenje potrošnje i alarm na skok) izvršava se u pozadinskom procesu MCP
+servera, jer Hermes Agent reaguje na poruke. Agent kroz dijalog
+\emph{zadaje} pravilo ili podsjetnik i \emph{čita} stanje, dok ga MCP server
+\emph{izvršava} i šalje notifikaciju na Telegram ili LCD.
+
+% \begin{figure}[h]\centering
+%   \includegraphics[width=0.9\textwidth]{arhitektura.png}
+%   \caption{Arhitektura realiziranog sistema.}
+% \end{figure}
+
+% --------------------------------------------------------------------
+\section{Krajnji IoT uređaji}
+
+\subsection{Tasmota uređaj (ESP32) --- energetsko-senzorski čvor}
+Mjeri klimatske uslove i potrošnju te upravlja relejima.
+\begin{table}[ht]
+      \centering
+      \begin{tabular}{@{}lll@{}}
+            \toprule
+            \textbf{Komponenta}              & \textbf{Opis}                         & \textbf{GPIO} \\
+            \midrule
+            DHT11                            & senzor temperature i vlažnosti        & TODO          \\
+            Modul sa 2 releja                & R1: klima, R2: ventilator/uređaj      & TODO          \\
+            Potenciometar na analognom ulazu & simulirana trenutna snaga (potrošnja) & TODO          \\
+            \bottomrule
+      \end{tabular}
+\end{table}
+
+\subsection{picoETF uređaj (Raspberry Pi Pico W, MicroPython) --- ambijentalno-interakcijski čvor}
+Realizira rasvjetu, roletne, otkrivanje prisustva, fizički panel i prikaze. Komunicira
+JSON porukama preko MQTT-a.
+\begin{itemize}[nosep]
+      \item 8 LED dioda (LED1--LED8) --- rasvjeta i scene; GPIO TODO
+      \item RGB LED dioda --- boja rasvjete i statusni indikator (vođen prirodnim jezikom); GPIO TODO
+      \item Servo motor --- upravljanje roletnama/prozorom; GPIO TODO
+      \item PIR senzor --- detekcija kretanja (osnova za diskreciju kod rasvjete); GPIO TODO
+      \item Fotosenzor (LDR) --- nivo ambijentalnog svjetla; ADC GPIO TODO
+      \item 4 tastera (T1--T4) --- fizički komandni panel; GPIO TODO
+      \item LCD Liquid Crystal --- tekstualni prikaz (podsjetnici, status, alarmi); SPI GPIO TODO
+      \item Dva 4-cifrena 7-segmentna displeja (npr. TM1637) --- numerički prikaz (scoreboard,
+            vrijeme, temperatura); GPIO TODO
+\end{itemize}
+
+\textit{Napomena: budžet GPIO pinova na Pico W je ograničen; po potrebi koristiti
+      I\textsuperscript{2}C ekspander ili shift registar za 8 LED dioda.}
+
+% --------------------------------------------------------------------
+\section{MQTT komunikacija}
+
+Tasmota koristi vlastitu konvenciju topic-a (\texttt{cmnd}/\texttt{stat}/\texttt{tele}),
+dok picoETF koristi vlastiti JSON format.
+
+\subsection{Planirani topic-i}
+\begin{tabularx}{\textwidth}{@{}L{0.40\textwidth} l X@{}}
+      \toprule
+      \textbf{Topic}                      & \textbf{Smjer} & \textbf{Sadržaj}                               \\
+      \midrule
+      \texttt{tele/timXX\_tasmota/SENSOR} & objava         & DHT11 (temp, vlažnost) + ANALOG (pot -> snaga) \\
+      \texttt{cmnd/timXX\_tasmota/POWER1} & komanda        & relej 1 (klima) ON/OFF                         \\
+      \texttt{cmnd/timXX\_tasmota/POWER2} & komanda        & relej 2 (ventilator/uređaj) ON/OFF             \\
+      \texttt{stat/timXX\_tasmota/POWER1} & objava         & potvrda stanja releja                          \\
+      \texttt{timXX/pico/cmd}             & komanda        & JSON: LED maska, RGB, servo, LCD, 7-seg        \\
+      \texttt{timXX/pico/state}           & objava         & JSON: tasteri, LDR, PIR                        \\
+      \bottomrule
+\end{tabularx}
+
+\subsection{Format poruka (picoETF)}
+Postavljaju se samo polja koja se mijenjaju.
+
+\begin{lstlisting}[style=json,caption={Komanda: sistem -> picoETF (timXX/pico/cmd)},captionpos=b]
+{
+  "led_mask": [1, 0, 1, 1, 0, 0, 0, 1],
+  "rgb": { "r": 255, "g": 120, "b": 0 },
+  "servo": 90,
+  "lcd": "Podsjetnik: lijek u 20:00",
+  "seg": { "d1": "98", "d2": "102" }
+}
+\end{lstlisting}
+
+\begin{lstlisting}[style=json,caption={Objava: picoETF -> sistem (timXX/pico/state)},captionpos=b]
+{
+  "buttons": { "T1": false, "T2": true, "T3": false, "T4": false },
+  "ldr": 18230,
+  "pir": true,
+  "ts": 1718000000
+}
+\end{lstlisting}
+
+\textit{RGB dioda služi dvojako: kao boja ambijentalne rasvjete i kao statusni indikator
+      (npr. crveno = klima radi / upozorenje, zeleno = sve uredu), postavljen prirodnim jezikom.}
+
+% --------------------------------------------------------------------
+\section{MCP funkcije}
+
+Funkcije koje Hermes Agent poziva, grupisane po namjeni. Svaki naziv, parametri i
+povratna vrijednost su jasni i povezani s odgovarajućim MQTT topic-om ili izvorom
+podataka, te s funkcionalnostima iz sekcije \emph{Funkcionalnosti sistema}. Funkcije za
+očitanje i neposrednu aktuaciju agent poziva sinhrono, dok kontinuirane i vremenski
+uslovljene radnje (podsjetnici, pravila, regulacija ciljne temperature, nadzor potrošnje)
+nakon registracije izvršava pozadinski proces MCP servera.
+
+\subsection{Senzorska očitanja}
+\begin{tabularx}{\textwidth}{@{}L{0.32\textwidth} L{0.26\textwidth} X@{}}
+      \toprule
+      \textbf{Funkcija (parametri)}   & \textbf{Veza (MQTT / izvor)} & \textbf{Opis i povratna vrijednost}   \\
+      \midrule
+      \texttt{ocitaj\_klimu()}        & tele Tasmota (DHT11)         & vraća temperaturu i vlažnost          \\
+      \texttt{ocitaj\_snagu()}        & tele Tasmota,  ANALOG (pot)  & vraća trenutnu (simuliranu) snagu u W \\
+      \texttt{ocitaj\_osvjetljenje()} & pico/state (LDR)             & vraća nivo ambijentalnog svjetla      \\
+      \texttt{ocitaj\_kretanje()}     & pico/state (PIR)             & vraća ima li kretanja (true/false)    \\
+      \texttt{ocitaj\_tastere()}      & pico/state                   & vraća stanje T1--T4 (fizički panel)   \\
+      \bottomrule
+\end{tabularx}
+
+\subsection{Upravljanje i aktuacija}
+\begin{tabularx}{\textwidth}{@{}L{0.45\textwidth} L{0.26\textwidth} X@{}}
+      \toprule
+      \textbf{Funkcija (parametri)}               & \textbf{Veza (MQTT / izvor)} & \textbf{Opis i povratna vrijednost}                           \\
+      \midrule
+      \texttt{postavi\_relej(broj, stanje)}       & komanda POWER1/POWER2        & uključi/isključi relej (klima/ventilator) i vraća novo stanje \\
+      \texttt{postavi\_ciljnu\_temperaturu(temp)} & MCP  + komanda POWER         & registruje ciljnu temp., MCP je održava relejem klime         \\
+      \texttt{postavi\_roletne(pozicija)}         & pico/cmd (servo)             & ,,otvoreno''/,,poluotvoreno''/,,zatvoreno''                   \\
+      \texttt{postavi\_led\_masku(maska)}         & pico/cmd                     & postavlja LED1-LED8 (rasvjeta)                                \\
+      \texttt{postavi\_rgb(r, g, b)}              & pico/cmd                     & postavlja boju RGB diode (ambijentalna rasvjeta)              \\
+      \texttt{postavi\_indikator(boja)}           & pico/cmd (RGB)               & RGB kao statusni indikator (imenovana boja)                   \\
+      \bottomrule
+\end{tabularx}
+
+\subsection{Prikaz}
+\begin{tabularx}{\textwidth}{@{}L{0.32\textwidth} L{0.26\textwidth} X@{}}
+      \toprule
+      \textbf{Funkcija (parametri)}         & \textbf{Veza (MQTT / izvor)} & \textbf{Opis i povratna vrijednost}             \\
+      \midrule
+      \texttt{prikazi\_na\_displeju(tekst)} & pico/cmd (LCD)               & ispisuje poruku/podsjetnik/status na LCD        \\
+      \texttt{postavi\_mod\_displeja(mod)}  & pico/cmd (LCD)               & npr. ,,podsjetnici'', ,,status'', ,,preporuke'' \\
+      \texttt{prikazi\_rezultat(d1, d2)}    & pico/cmd (7-seg)             & numerički prikaz na dva 7-segmentna displeja    \\
+      \texttt{ocisti\_displeje()}           & pico/cmd (LCD, 7-seg)        & briše LCD i 7-segmentne prikaze                 \\
+      \bottomrule
+\end{tabularx}
+
+\subsection{Perzistencija (Pravila i podsjetnici sistema)}
+\begin{tabularx}{\textwidth}{@{}L{0.32\textwidth} L{0.26\textwidth} X@{}}
+      \toprule
+      \textbf{Funkcija (parametri)}             & \textbf{Veza (MQTT / izvor)} & \textbf{Opis i povratna vrijednost}                              \\
+      \midrule
+      \texttt{dodaj\_podsjetnik(opis, vrijeme)} & Perzistencija (MCP)          & registruje obavezu, povratna vrijednost je ID                    \\
+      \texttt{daj\_podsjetnike()}               & Perzistencija (MCP)          & vraća listu aktivnih obaveza i podsjetnika                       \\
+      \texttt{obrisi\_podsjetnik(id)}           & Perzistencija (MCP)          & briše podsjetnik i vraća potvrdu                                 \\
+      \texttt{dodaj\_pravilo(uslov, akcija)}    & Perzistencija (MCP)          & postavlja pravilo zadato od korisnika, povratna vrijednost je ID \\
+      \texttt{daj\_pravila()}                   & Perzistencija (MCP)          & vraća listu aktivnih pravila                                     \\
+      \texttt{obrisi\_pravilo(id)}              & Perzistencija (MCP)          & uklanja/deaktivira pravilo; vraća potvrdu                        \\
+      \bottomrule
+\end{tabularx}
+
+\subsection{Perzistencija (scene, potrošnja i dnevnik)}
+\begin{tabularx}{\textwidth}{@{}L{0.32\textwidth} L{0.26\textwidth} X@{}}
+      \toprule
+      \textbf{Funkcija (parametri)}              & \textbf{Veza (MQTT / izvor)} & \textbf{Opis i povratna vrijednost}                  \\
+      \midrule
+      \texttt{definisi\_scenu(naziv, stanje)}    & Perzistencija (MCP)          & pamti scenu (LED maska, RGB, roletne)                \\
+      \texttt{aktiviraj\_scenu(naziv)}           & Perzistencija (MCP)          & npr. ,,opuštanje'', ,,radni režim''                  \\
+      \texttt{daj\_izvjestaj\_potrosnje(period)} & log potrošnje                & vraća kWh, trošak po tarifi i najvećeg potrošača     \\
+      \texttt{daj\_dnevnik\_akcija(period)}      & dnevnik akcija (MCP)         & vraća historiju akcija (npr. ,,zašto je upaljen X'') \\
+      \bottomrule
+\end{tabularx}
+
+\subsection{Notifikacije i vanjski izvori}
+\begin{tabularx}{\textwidth}{@{}L{0.32\textwidth} L{0.26\textwidth} X@{}}
+      \toprule
+      \textbf{Funkcija (parametri)}                & \textbf{Veza (MQTT / izvor)} & \textbf{Opis i povratna vrijednost}                      \\
+      \midrule
+      \texttt{posalji\_notifikaciju(kanal, tekst)} & Telegram / LCD               & šalje obavijest (podsjetnik, alarm) korisniku            \\
+      \texttt{daj\_prognozu(grad)}                 & Internet                     & vremenska prognoza za donošenje odluka                   \\
+      \texttt{web\_pretraga(upit, mod)}            & Internet (Hermes)            & ugrađena web-pretraga (rezultat utakmice, cijena goriva) \\
+      \texttt{prati\_informaciju(upit, interval)}  & Internet (Hermes) + MCP      & registruje periodično praćenje upita; vraća ID praćenja  \\
+      \texttt{zaustavi\_pracenje(id)}              & Perzistencija (MCP)          & zaustavlja aktivno praćenje; vraća potvrdu               \\
+      \bottomrule
+\end{tabularx}
+
+\textit{Jednokratni prikaz (npr. ,,koliko košta dizel danas'') koristi
+      \texttt{web\_pretraga}, nakon čega agent poziva \texttt{prikazi\_rezultat} i po
+      potrebi \texttt{postavi\_indikator}. Kontinuirano praćenje (npr. ,,prati rezultat
+      utakmice'') registruje se sa \texttt{prati\_informaciju}: pozadinski proces MCP
+      servera periodično ponavlja pretragu i osvježava displeje i RGB indikator dok se
+      praćenje ne zaustavi. Proaktivne obavijesti (okidanje podsjetnika, alarm na skok
+      potrošnje) pozadinski proces šalje pozivom \texttt{posalji\_notifikaciju}.}
+
+% --------------------------------------------------------------------
+\section{Nacin komunikacije korisnika s agentom}
+
+Korisnik sa sistemom komunicira kroz tri kanala: lokalni chat (SSH/TUI, primarno za
+razvoj i testiranje), Telegram bot (primarni daljinski kanal) i fizički panel (tasteri
+T1--T4 uz prikaze na LCD i 7-segmentnim displejima). Reprezentativni primjeri zahtjeva:
+
+\begin{itemize}[nosep]
+      \item \emph{,,Podsjeti me da uzmem lijek svaki dan u 20h.''} -> \texttt{dodaj\_podsjetnik}
+      \item \emph{,,Ako temperatura pređe 28 stepeni, upali klimu.''} -> \texttt{dodaj\_pravilo}
+      \item \emph{,,Vani je sunčano i toplo, pripremi sobu.''} -> \texttt{daj\_prognozu} + \texttt{postavi\_roletne} + \texttt{postavi\_relej}
+      \item \emph{,,Uključi scenu opuštanje.''} -> \texttt{aktiviraj\_scenu}
+      \item \emph{,,Koliko sam potrošio danas i koliko to košta?''} -> \texttt{daj\_izvjestaj\_potrosnje}
+      \item \emph{,,Prati rezultat utakmice BiH--Kanada, navijam za BiH.''} -> \texttt{prati\_informaciju} + \texttt{prikazi\_rezultat} + \texttt{postavi\_indikator}
+      \item \emph{,,Gdje je najjeftinije gorivo danas u Sarajevu?''} -> \texttt{web\_pretraga} + \texttt{prikazi\_rezultat} + \texttt{posalji\_notifikaciju}
+\end{itemize}
+
+% --------------------------------------------------------------------
+\section{Agentski scenariji}
+
+Reprezentativni scenariji, svaki povezan s funkcijama iz sekcije \emph{MCP funkcije}:
+\subsection{Jutarnji briefing}
+Korisnik (Telegram): \emph{,,Šta me čeka danas?''}
+
+\begin{enumerate}[nosep]
+      \item \texttt{daj\_podsjetnike()} --- vraća listu obaveza za danas.
+      \item \texttt{daj\_prognozu(,,Sarajevo'')} --- npr. sunčano, 31\,\textdegree C.
+      \item Agent zaključuje da se očekuje vrućina i predlaže pripremu doma; čeka potvrdu
+            korisnika.
+      \item \texttt{postavi\_roletne(,,poluotvoreno'')} --- smanjuje pregrijavanje.
+      \item \texttt{postavi\_ciljnu\_temperaturu(24)} --- MCP dalje održava temperaturu
+            relejem klime.
+      \item \texttt{prikazi\_na\_displeju(,,Danas: 2 obaveze | 31 C'')} --- sažetak na LCD.
+      \item \texttt{posalji\_notifikaciju(,,telegram'', \dots)} --- isti sažetak na Telegram.
+\end{enumerate}
+
+\subsection{Adaptivno osvjetljenje s diskrecijom}
+Korisnik: \emph{,,Ako je mračno i ima kretanja, upali radnu scenu.''}
+\begin{enumerate}[nosep]
+      \item \texttt{dodaj\_pravilo(,,LDR$<$prag i PIR'', ,,scena rad'')} --- registruje
+            pravilo; vraća ID.
+      \item \emph{(pozadina)} \texttt{ocitaj\_osvjetljenje()} --- periodično očitava nivo
+            svjetla.
+      \item \emph{(pozadina)} \texttt{ocitaj\_kretanje()} --- provjerava prisustvo.
+      \item Ako je mračno ali nema kretanja --- ništa se ne dešava (diskrecija).
+      \item Kad su oba uslova ispunjena: \texttt{aktiviraj\_scenu(,,rad'')} --- pali radnu
+            rasvjetu.
+\end{enumerate}
+
+\subsection{Nadzor potrošnje i alarm}
+Pozadinski proces kontinuirano prati (simuliranu) snagu.
+\begin{enumerate}[nosep]
+      \item \emph{(pozadina)} \texttt{ocitaj\_snagu()} --- periodično mjerenje snage.
+      \item Na nagli skok: \texttt{posalji\_notifikaciju(,,telegram'', ,,Nagli porast potrošnje energije...(dodatni podaci)'')}.
+      \item \texttt{postavi\_indikator(,,crveno'')} --- vizuelni alarm na RGB diodi.
+      \item Na zahtjev \emph{,,Koliko sam potrošio danas?''}:
+            \texttt{daj\_izvjestaj\_potrosnje(,,danas'')} --- vraća kWh i trošak po tarifi.
+\end{enumerate}
+
+\subsection{Održavanje temperature}
+Korisnik: \emph{,,Drži sobu na 24 stepena.''}
+\begin{enumerate}[nosep]
+      \item \texttt{postavi\_ciljnu\_temperaturu(24)} --- registruje ciljnu temperaturu.
+      \item \emph{(pozadina)} \texttt{ocitaj\_klimu()} --- periodično očitava temperaturu.
+      \item \emph{(pozadina)} \texttt{postavi\_relej(1, stanje)} --- uključuje/isključuje
+            klimu prema odstupanju od cilja.
+      \item Ručna korekcija \emph{,,ugasi klimu na sat vremena''}:
+            \texttt{postavi\_relej(1, ,,off'')} (privremeno).
+\end{enumerate}
+
+\subsection{Praćenje rezultata utakmice (scoreboard)}
+Korisnik: \emph{,,Prati rezultat utakmice BiH--Kanada, navijam za BiH.''}
+\begin{enumerate}[nosep]
+      \item \texttt{prati\_informaciju(,,rezultat BiH Kanada'', 60)} --- registruje
+            periodično praćenje; vraća ID.
+      \item \emph{(pozadina, svakih ${\sim}60$\,s)} \texttt{prikazi\_rezultat(d1, d2)} ---
+            osvježava rezultat na dva 7-segmentna displeja.
+      \item \emph{(pozadina)} \texttt{postavi\_indikator(boja)} --- zeleno (vodi BiH),
+            crveno (gubi), žuto (neriješeno).
+      \item Po završetku utakmice ili na zahtjev: \texttt{zaustavi\_pracenje(id)}.
+\end{enumerate}
+
+% --------------------------------------------------------------------
+\section{Plan demonstracije}
+
+\begin{enumerate}[nosep]
+      \item Pokretanje sistema
+      \item Osnovne komande: očitavanje klime i upravljanje relejima/rasvjetom kroz dijalog.
+      \item Simulacija jednog cijelog agentskog scenarija
+      \item Nadzor potrošnje: alarm na naglu promjenu i obračun troška na zahtjev.
+      \item Demonstracija informacijskog prikaza na 7-segmentnim displejima uz RGB indikator.
+      \item Demonstracija remote pristup i komunikacija preko Telegrama.
+      \item Postavljanje podsjetnika i praćenje ponašanja sistema
+\end{enumerate}
+
+% --------------------------------------------------------------------
+
+\end{document}
